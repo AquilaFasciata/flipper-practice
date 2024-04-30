@@ -29,14 +29,61 @@ typedef struct {
     Popup* popup;
 } pttApp;
 
+void ptt_app_scene_on_enter_popup_one(void* context) {
+    pttApp* app = context;
+    popup_reset(app->popup);
+    popup_set_context(app->popup, app);
+    popup_set_header(app->popup, "Popup 1", 64, 10, AlignCenter, AlignTop);
+    popup_set_icon(app->popup, 10, 10, &I_one);
+    popup_set_text(app->popup, "Popup numero uno!", 64, 20, AlignLeft, AlignTop);
+    view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Popup);
+}
+
+void ptt_app_scene_on_enter_popup_two(void* context) {
+    pttApp* app = context;
+    popup_reset(app->popup);
+    popup_set_context(app->popup, app);
+    popup_set_header(app->popup, "Popup 2:", 64, 10, AlignCenter, AlignTop);
+    popup_set_icon(app->popup, 10, 10, &I_two);
+}
+
+void ptt_app_scene_on_exit_main_menu(void* context, SceneManagerEvent event) {
+    pttApp* app = context;
+    menu_reset(app->menu);
+}
+
+bool ptt_app_scene_on_event_main_menu(void* context, SceneManagerEvent event) {
+    pttApp* app = context;
+    bool consumed = false;
+    switch(event.type) {
+    case SceneManagerEventTypeCustom:
+        switch(event.event) {
+        case PttAppEvent_ShowPopup1:
+            scene_manager_next_scene(app->scene_manager, PttAppScene_FirstPopup);
+            consumed = true;
+            break;
+        case PttAppEvent_ShowPopup2:
+            scene_manager_next_scene(app->scene_manager, PttAppScene_SecondPopup);
+            consumed = true;
+            break;
+        }
+    default:
+        consumed = false;
+        break;
+    }
+    return consumed;
+}
+
 void ptt_app_scene_on_enter_main_menu(void* context) {
     pttApp* app = context;
     menu_reset(app->menu);
 
     menu_add_item(
-        app->menu, "Popup 1", NULL,
+        app->menu, "Popup 1", NULL, PttAppMenuSelection_One, ptt_app_menu_callback_main_menu, app);
+    menu_add_item(
+        app->menu, "Popup 2", NULL, PttAppMenuSelection_Two, ptt_app_menu_callback_main_menu, app);
 
-    )
+    view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Menu);
 }
 
 void test_app_view_dispatcher_init(pttApp* app) {
@@ -91,5 +138,6 @@ int32_t ptt_app(void* p) {
     UNUSED(p);
     FURI_LOG_I("TEST", "Hello world");
     FURI_LOG_I("TEST", "I'm ptt!");
-    canvas_draw_frame() return 0;
+    canvas_draw_frame();
+    return 0;
 }
