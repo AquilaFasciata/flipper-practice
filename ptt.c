@@ -16,6 +16,10 @@ typedef enum {
     PttAppScene_count
 } PttAppScene;
 
+typedef enum { PttAppEvent_ShowPopup1, PttAppEvent_ShowPopup2 } PttAppEvent;
+
+typedef enum { PttAppMenuSelection_One, PttAppMenuSelection_Two } PttAppMenuSelection;
+
 typedef enum { PttAppView_Menu, PttAppView_Popup } PttAppView;
 
 typedef struct {
@@ -24,6 +28,16 @@ typedef struct {
     Menu* menu;
     Popup* popup;
 } pttApp;
+
+void ptt_app_scene_on_enter_main_menu(void* context) {
+    pttApp* app = context;
+    menu_reset(app->menu);
+
+    menu_add_item(
+        app->menu, "Popup 1", NULL,
+
+    )
+}
 
 void test_app_view_dispatcher_init(pttApp* app) {
     app->view_dispatcher = view_dispatcher_alloc();
