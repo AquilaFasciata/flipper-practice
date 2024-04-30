@@ -29,6 +29,17 @@ typedef struct {
     Popup* popup;
 } pttApp;
 
+bool ptt_app_scene_on_event_popup_one(void* context, SceneManagerEvent event) {
+    UNUSED(context);
+    UNUSED(event);
+    return false;
+}
+
+void ptt_app_scene_on_exit_popup_one(void* context) {
+    pttApp* app = context;
+    popup_reset(app->popup);
+}
+
 void ptt_app_scene_on_enter_popup_one(void* context) {
     pttApp* app = context;
     popup_reset(app->popup);
@@ -39,12 +50,25 @@ void ptt_app_scene_on_enter_popup_one(void* context) {
     view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Popup);
 }
 
+bool ptt_app_scene_on_event_popup_two(void* context, SceneManagerEvent event) {
+    UNUSED(context);
+    UNUSED(event);
+    return false;
+}
+
+void ptt_app_scene_on_exit_popup_two(void* context) {
+    pttApp* app = context;
+    popup_reset(app->popup);
+}
+
 void ptt_app_scene_on_enter_popup_two(void* context) {
     pttApp* app = context;
     popup_reset(app->popup);
     popup_set_context(app->popup, app);
     popup_set_header(app->popup, "Popup 2:", 64, 10, AlignCenter, AlignTop);
     popup_set_icon(app->popup, 10, 10, &I_two);
+    popup_set_text(app->popup, "The second popup!!", 64, 20, AlignLeft, AlignTop);
+    view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Popup);
 }
 
 void ptt_app_scene_on_exit_main_menu(void* context, SceneManagerEvent event) {
