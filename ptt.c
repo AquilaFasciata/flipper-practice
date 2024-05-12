@@ -29,6 +29,8 @@ typedef struct {
     Popup* popup;
 } pttApp;
 
+// Popup 1 Items
+
 bool ptt_app_scene_on_event_popup_one(void* context, SceneManagerEvent event) {
     UNUSED(context);
     UNUSED(event);
@@ -49,6 +51,9 @@ void ptt_app_scene_on_enter_popup_one(void* context) {
     popup_set_text(app->popup, "Popup numero uno!", 64, 20, AlignLeft, AlignTop);
     view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Popup);
 }
+
+// End Popup 1 Items
+// Popup 2 Items
 
 bool ptt_app_scene_on_event_popup_two(void* context, SceneManagerEvent event) {
     UNUSED(context);
@@ -71,7 +76,19 @@ void ptt_app_scene_on_enter_popup_two(void* context) {
     view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Popup);
 }
 
-void ptt_app_scene_on_exit_main_menu(void* context, SceneManagerEvent event) {
+// End Popup 2 Items
+// Main Menu Items
+
+bool ptt_app_scene_manager_custom_event_callback(void* context, uint32_t event) {
+    pttApp* app = context;
+    return scene_manager_handle_custom_event(app->scene_manager, event);
+}
+
+bool ptt_app_scene_manager_navigation_event_callback(void* context) {
+    pttApp* app = context;
+    return scene_manager_handle_back_event(app->scene_manager);
+}
+void ptt_app_scene_on_exit_main_menu(void* context) {
     pttApp* app = context;
     menu_reset(app->menu);
 }
@@ -90,12 +107,27 @@ bool ptt_app_scene_on_event_main_menu(void* context, SceneManagerEvent event) {
             scene_manager_next_scene(app->scene_manager, PttAppScene_SecondPopup);
             consumed = true;
             break;
+        default:
+            break;
         }
+        break;
     default:
         consumed = false;
         break;
     }
     return consumed;
+}
+
+void ptt_app_menu_callback_main_menu(void* context, uint32_t index) {
+    pttApp* app = context;
+    switch(index) {
+    case PttAppMenuSelection_One:
+        scene_manager_handle_custom_event(app->scene_manager, PttAppEvent_ShowPopup1);
+        break;
+    case PttAppMenuSelection_Two:
+        scene_manager_handle_custom_event(app->scene_manager, PttAppEvent_ShowPopup2);
+        break;
+    }
 }
 
 void ptt_app_scene_on_enter_main_menu(void* context) {
@@ -110,7 +142,9 @@ void ptt_app_scene_on_enter_main_menu(void* context) {
     view_dispatcher_switch_to_view(app->view_dispatcher, PttAppView_Menu);
 }
 
-void test_app_view_dispatcher_init(pttApp* app) {
+// End Main Menu Items
+
+void ptt_app_view_dispatcher_init(pttApp* app) {
     app->view_dispatcher = view_dispatcher_alloc();
     view_dispatcher_enable_queue(app->view_dispatcher);
 
@@ -121,7 +155,7 @@ void test_app_view_dispatcher_init(pttApp* app) {
     view_dispatcher_set_custom_event_callback(
         app->view_dispatcher, ptt_app_scene_manager_custom_event_callback);
     view_dispatcher_set_navigation_event_callback(
-        app->view_dispatcher, test_app_scene_manager_navigation_event_callback);
+        app->view_dispatcher, ptt_app_scene_manager_navigation_event_callback);
 
     view_dispatcher_add_view(app->view_dispatcher, PttAppView_Menu, menu_get_view(app->menu));
     view_dispatcher_add_view(app->view_dispatcher, PttAppView_Popup, popup_get_view(app->popup));
@@ -132,12 +166,12 @@ void (*const ptt_app_scene_on_enter_handlers[])(void*) = {
     ptt_app_scene_on_enter_popup_one,
     ptt_app_scene_on_enter_popup_two};
 
-bool (*const ptt_app_scene_on_event_handlers[])(void*, SceneManagerEvent){
+bool (*const ptt_app_scene_on_event_handlers[])(void*, SceneManagerEvent) = {
     ptt_app_scene_on_event_main_menu,
     ptt_app_scene_on_event_popup_one,
     ptt_app_scene_on_event_popup_two};
 
-void (*const ptt_app_scene_on_exit_handlers[])(void*){
+void (*const ptt_app_scene_on_exit_handlers[])(void*) = {
     ptt_app_scene_on_exit_main_menu,
     ptt_app_scene_on_exit_popup_one,
     ptt_app_scene_on_exit_popup_two};
@@ -156,12 +190,31 @@ pttApp* ptt_init() {
     pttApp* app = malloc(sizeof(pttApp));
     ptt_app_scene_manager_init(app);
     ptt_app_view_dispatcher_init(app);
+    return app;
+}
+
+void ptt_app_free(pttApp* app) {
+    scene_manager_free(app->scene_manager);
+    view_dispatcher_remove_view(app->view_dispatcher, PttAppView_Menu);
+    view_dispatcher_remove_view(app->view_dispatcher, PttAppView_Popup);
+    view_dispatcher_free(app->view_dispatcher);
+    menu_free(app->menu);
+    popup_free(app->popup);
+    free(app);
 }
 
 int32_t ptt_app(void* p) {
     UNUSED(p);
     FURI_LOG_I("TEST", "Hello world");
     FURI_LOG_I("TEST", "I'm ptt!");
-    canvas_draw_frame();
+    pttApp* app = ptt_init();
+
+    Gui* gui = furi_record_open(RECORD_GUI);
+    view_dispatcher_attach_to_gui(app->view_dispatcher, gui, ViewDispatcherTypeFullscreen);
+    scene_manager_next_scene(app->scene_manager, PttAppScene_MainMenu);
+    view_dispatcher_run(app->view_dispatcher);
+
+    furi_record_close(RECORD_GUI);
+    ptt_app_free(app);
     return 0;
 }
